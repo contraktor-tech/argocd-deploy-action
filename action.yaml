@@ -20,6 +20,9 @@ inputs:
   project-name:
     description: 'combined name of application name plus platform name '
     require: true
+  package-name:
+    description: 'package name of ghcr to delete'
+    require: true
 
 runs:
   using: 'composite'
@@ -123,6 +126,7 @@ runs:
     - name: send deploy metric to influxdb
       uses: contraktor-tech/datapoint-producer-action@v2
       if: |
+        github.repository == 'contraktor-tech/prod-deployments' &&
         !contains(github.event.head_commit.message, 'rollback') &&
         !contains(github.event.head_commit.message, 'revert')
       with:
@@ -148,3 +152,12 @@ runs:
         project-name: ${{ inputs.project-name }}'
         environment-name: 'prod'
         deploy-status: 'failure'
+
+    - name: delete ghcr packages
+      uses: i9cloud-tech/delete-untagged-ghcr-action@master
+      env:
+        PACKAGE_NAME: ${{ inputs.package-name }}
+      with:
+        org: ${{ secrets.ORG_NAME }}
+        gh-token: ${{ secrets.GH_TOKEN }}
+        package-name: ${{ PACKAGE_NAME }}
