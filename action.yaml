@@ -125,8 +125,9 @@ runs:
     - name: commit alterations at the github
       shell: bash
       working-directory: ${{ inputs.repository-name }}
-      run: |     
-        git commit -am"Send application to monitoring of Argo CD"
+      run: |
+        commit-message=`git show -s --format=%B`  
+        git commit -am"$commit-message"
       
     - name: push commit to github
       shell: bash
