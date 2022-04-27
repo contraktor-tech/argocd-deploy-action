@@ -2,6 +2,9 @@ name: 'Deploy applications to Argo CD'
 description: 'Send applications to Argo CD when to occur project deploy.'
 author: 'Robson Andrade<robson.andrade@contraktor.com.br>'
 inputs:
+  environment:
+    description: 'the application environment ( dev, stg, prod )'
+    require: 
   application-name:
     description: 'application name'
     require: true
@@ -32,8 +35,8 @@ runs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_KEY }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+        aws-access-key-id: ${{secrets.AWS_KEY}}
+        aws-secret-access-key: ${{secrets.AWS_SECRET}}
         aws-region: us-east-1
 
     - name: Login to Amazon ECR
@@ -43,12 +46,13 @@ runs:
     - name: get app version
       id: app
       env:
-        IMAGE: ${{inputs.image-name}}
+        IMAGE: ${{ inputs.image-name }}
         GHCR: 'ghcr.io'
         OWNER: ${{ secrets.ORG_NAME }}
+        ENVIRONMENT: ${{ inputs.environment }}
       run: |
         version=`git rev-parse --short HEAD`
-        echo "::set-output name=version::dev-$version"
+        echo "::set-output name=version::${ENVIRONMENT}-$version"
         echo "::set-output name=image::$IMAGE"
         echo "::set-output name=ghcr::$GHCR/$OWNER"
     
@@ -90,45 +94,68 @@ runs:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
+        APPLICATION_NAME: ${{ inputs.application-name }}
       run: |
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
-        envsubst < deploy/rollout-template.yaml > deploy/${APPLICATION_NAME}-rollout.yaml
+        envsubst < deploy/rollout-template.yaml > deploy/${APPLICATION_NAME }-rollout.yaml
 
     - name: clone repository 
       shell: bash
+      working-directory: ${{ inputs.repository-name }}
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         OWNER: ${{ secrets.ORG_NAME }}
-        REPOSITORY_NAME: ${{ inputs.repository-name }}
-        APPLICATION_NAME: ${{ inputs.application-name }}
+        REPOSITORY_NAME: ${ inputs.repository-name }
+        APPLICATION_NAME: ${ inputs.application-name }}
         PATH_NAME: ${{ inputs.path-name }}
       run: |
-        git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${{REPOSITORY_NAME}}.git ${{REPOSITORY_NAME}}
-        cp deploy/${{APPLICATION_NAME}}-rollout.yaml ${{REPOSITORY_NAME}}/${{PATH_NAME}}/${{APPLICATION_NAME}}-rollout.yaml
-        cd ${{REPOSITORY_NAME}}/
-        
-        git remote -v 
-        git branch
-        git status
+        git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${REPOSITORY_NAME}.git ${REPOSITORY_NAME}
+        cp deploy/${APPLICATION_NAME}-rollout.yaml ${REPOSITORY_NAME}/${PATH_NAME}/${APPLICATION_NAME}-rollout.yaml
     
-    - name: config user and commit alterations github
+    - name: config user admin of github
       shell: bash
+      working-directory: ${{ inputs.repository-name }}
       env:
         USERNAME: ${{ secrets.USERNAME }}
         EMAIL: ${{ secrets.EMAIL }}
       run: |
         git config user.name ${USERNAME}
         git config user.email ${EMAIL}
-        
+      
+    - name: commit alterations at the github
+      shell: bash
+      working-directory: ${{ inputs.repository-name }}
+      run: |     
         git commit -am"Send application to monitoring of Argo CD"
+      
+    - name: push commit to github
+      shell: bash
+      working-directory: ${{ inputs.repository-name }}
+      run: |     
         git push
+
+    - name: send rollback metric to influxdb
+      uses: contraktor-tech/datapoint-producer-action@v2
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      if: |
+        ${ENVIRONMENT} == 'prod' &&
+        (contains(github.event.head_commit.message, 'rollback') ||
+        contains(github.event.head_commit.message, 'revert'))
+      with:
+        influxdb-token: ${{ secrets.INFLUXDB_TOKEN }}
+        influxdb-url: ${{ secrets.INFLUXDB_URL }}
+        influxdb-measurement: 'rollback'
+        app: 'starter-web-ui'
 
     - name: send deploy metric to influxdb
       uses: contraktor-tech/datapoint-producer-action@v2
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
       if: |
-        github.repository == 'contraktor-tech/prod-deployments' &&
-        !contains(github.event.head_commit.message, 'rollback') &&
-        !contains(github.event.head_commit.message, 'revert')
+        ${ENVIRONMENT} == 'prod' &&
+        (!contains(github.event.head_commit.message, 'rollback') &&
+        !contains(github.event.head_commit.message, 'revert'))
       with:
         influxdb-token: ${{ secrets.INFLUXDB_TOKEN }}
         influxdb-url: ${{ secrets.INFLUXDB_URL }}
@@ -141,7 +168,7 @@ runs:
       with:
         slack-hook: ${{ secrets.SLACK_HOOK }}
         project-name: ${{ inputs.project-name }}
-        environment-name: 'prod'
+        environment-name: ${{ inputs.environment }}
         deploy-status: 'success'
 
     - name: deploy has failed - Send notification deploy to Slack
@@ -149,15 +176,13 @@ runs:
       if: ${{ failure() }}
       with:
         slack-hook: ${{ secrets.SLACK_HOOK }}
-        project-name: ${{ inputs.project-name }}'
-        environment-name: 'prod'
+        project-name: ${{ inputs.project-name }}
+        environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
 
     - name: delete ghcr packages
       uses: i9cloud-tech/delete-untagged-ghcr-action@master
-      env:
-        PACKAGE_NAME: ${{ inputs.package-name }}
       with:
         org: ${{ secrets.ORG_NAME }}
         gh-token: ${{ secrets.GH_TOKEN }}
-        package-name: ${{ PACKAGE_NAME }}
+        package-name: ${{ inputs.package-name }}
