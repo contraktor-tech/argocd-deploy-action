@@ -56,6 +56,14 @@ runs:
         echo "::set-output name=image::$IMAGE"
         echo "::set-output name=ghcr::$GHCR/$OWNER"
     
+    - name: tag docker image to ecr
+      env:
+        ECR: ${{ steps.login-ecr.outputs.registry }}
+        VERSION: ${{ steps.app.outputs.version }}
+        IMAGE: ${{ steps.app.outputs.image }}
+      run: |
+        docker tag $ECR/$IMAGE:$VERSION
+    
     - name: tag docker image to ghcr
       env:
         ECR: ${{ steps.login-ecr.outputs.registry }}
