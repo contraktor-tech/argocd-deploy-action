@@ -164,7 +164,7 @@ runs:
         app: ${{ inputs.app-influx-name}}
     
     - name: deploy has succeeded - Send notification deploy to Slack
-      uses: contraktor-tech/slack-notification-action@master
+      uses: contraktor-tech/slack-notification-action@feat/CK-1953
       if: ${{ success() }}
       with:
         slack-hook: ${{ secrets.SLACK_HOOK }}
@@ -173,7 +173,7 @@ runs:
         deploy-status: 'success'
 
     - name: deploy has failed - Send notification deploy to Slack
-      uses: contraktor-tech/slack-notification-action@master
+      uses: contraktor-tech/slack-notification-action@feat/CK-1953
       if: ${{ failure() }}
       with:
         slack-hook: ${{ secrets.SLACK_HOOK }}
