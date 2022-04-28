@@ -2,23 +2,56 @@ name: 'Deploy applications to Argo CD'
 description: 'Send applications to Argo CD when to occur project deploy.'
 author: 'Robson Andrade<robson.andrade@contraktor.com.br>'
 inputs:
-  environment:
-    description: 'the application environment ( dev, stg, prod )'
-    require: 
-  application-name:
-    description: 'application name'
+  aws-access-key-id:
+    description: ' AWS secret key'
+    require: true
+  aws-secret-access-key:
+    description: ' AWS secret'
     require: true
   image-name:
     description: 'same name of repository'
     require: true 
+  owner:
+    description: 'organization of github'
+    require: true
+  environment:
+    description: 'the application environment ( dev, stg, prod )'
+    require: true
+  username:
+    description: 'username who will commit the application to argo cd'
+    require: true
+  gh-token:
+    description: 'token of github'
+    require: true
   repository-name:
     description: 'repository that will be cloned'
     require: true 
+  application-name:
+    description: 'application name'
+    require: true
   path-name:
     description: 'path of environment and platform'
     require: true
+  email:
+    description: 'email of user who will commit the application to argo cd'
+    require: true
+  influxdb-token:
+    description: 'token to access influxdb instance'
+    require: true
+  influxdb-url:
+    description: 'url to influxdb instance'
+    require: true
   app-influx-name:
     description: 'name app to send deploy metric to influxdb ( combined name of platform name plus application name )'
+    require: true
+  slack-hook: 
+    description: 'token connect Slack' 
+    require: true
+  argocd-domain: 
+    description: 'domain intern of Argo CD'
+    require: true
+  argocd-app: 
+    description: 'application name at Argo CD'
     require: true
   project-name:
     description: 'combined name of application name plus platform name '
@@ -35,8 +68,8 @@ runs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{secrets.AWS_KEY}}
-        aws-secret-access-key: ${{secrets.AWS_SECRET}}
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: us-east-1
 
     - name: Login to Amazon ECR
@@ -48,7 +81,7 @@ runs:
       env:
         IMAGE: ${{ inputs.image-name }}
         GHCR: 'ghcr.io'
-        OWNER: ${{ secrets.ORG_NAME }}
+        OWNER: ${{ inputs.owner }}
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
         version=`git rev-parse --short HEAD`
@@ -83,8 +116,8 @@ runs:
     
     - name: docker login to ghcr
       env:
-        USERNAME: ${{ secrets.USERNAME }}
-        TOKEN: ${{ secrets.GH_TOKEN }}
+        USERNAME: ${{ inputs.username }}
+        TOKEN: ${{ inputs.gh-token }}
       run: |
         echo $TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
     
@@ -111,8 +144,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.repository-name }}
       env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        OWNER: ${{ secrets.ORG_NAME }}
+        GH_TOKEN: ${{ inputs.gh-token }}
+        OWNER: ${{ inputs.owner }}
         REPOSITORY_NAME: ${ inputs.repository-name }
         APPLICATION_NAME: ${ inputs.application-name }}
         PATH_NAME: ${{ inputs.path-name }}
@@ -124,8 +157,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.repository-name }}
       env:
-        USERNAME: ${{ secrets.USERNAME }}
-        EMAIL: ${{ secrets.EMAIL }}
+        USERNAME: ${{ inputs.username }}
+        EMAIL: ${{ inputs.email }}
       run: |
         git config user.name ${USERNAME}
         git config user.email ${EMAIL}
@@ -152,10 +185,10 @@ runs:
         (contains(github.event.head_commit.message, 'rollback') ||
         contains(github.event.head_commit.message, 'revert'))
       with:
-        influxdb-token: ${{ secrets.INFLUXDB_TOKEN }}
-        influxdb-url: ${{ secrets.INFLUXDB_URL }}
+        influxdb-token: ${{ inputs.influxdb-token }}
+        influxdb-url: ${{ inputs.influxdb-url }}
         influxdb-measurement: 'rollback'
-        app: 'starter-web-ui'
+        app: ${{ inputs.app-influx-name}}
 
     - name: send deploy metric to influxdb
       uses: contraktor-tech/datapoint-producer-action@v2
@@ -166,8 +199,8 @@ runs:
         (!contains(github.event.head_commit.message, 'rollback') &&
         !contains(github.event.head_commit.message, 'revert'))
       with:
-        influxdb-token: ${{ secrets.INFLUXDB_TOKEN }}
-        influxdb-url: ${{ secrets.INFLUXDB_URL }}
+        influxdb-token: ${{ inputs.influxdb-token }}
+        influxdb-url: ${{ inputs.influxdb-url }}
         influxdb-measurement: 'deploy'
         app: ${{ inputs.app-influx-name}}
     
@@ -175,7 +208,9 @@ runs:
       uses: contraktor-tech/slack-notification-action@feat/CK-1953
       if: ${{ success() }}
       with:
-        slack-hook: ${{ secrets.SLACK_HOOK }}
+        slack-hook: ${{ inputs.slack-hook }}
+        argocd-domain: ${{ inputs.argocd-domain}}
+        argocd-app: ${{ inputs.argocd-app}}
         project-name: ${{ inputs.project-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'success'
@@ -184,7 +219,9 @@ runs:
       uses: contraktor-tech/slack-notification-action@feat/CK-1953
       if: ${{ failure() }}
       with:
-        slack-hook: ${{ secrets.SLACK_HOOK }}
+        slack-hook: ${{ inputs.slack-hook }}
+        argocd-domain: ${{ inputs.argocd-domain}}
+        argocd-app: ${{ inputs.argocd-app}}
         project-name: ${{ inputs.project-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
@@ -192,6 +229,6 @@ runs:
     - name: delete ghcr packages
       uses: i9cloud-tech/delete-untagged-ghcr-action@master
       with:
-        org: ${{ secrets.ORG_NAME }}
-        gh-token: ${{ secrets.GH_TOKEN }}
+        org: ${{ inputs.owner }}
+        gh-token: ${{ inputs.gh-token }}
         package-name: ${{ inputs.package-name }}
