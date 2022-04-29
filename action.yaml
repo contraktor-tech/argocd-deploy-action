@@ -129,10 +129,10 @@ runs:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
-        APPLICATION_NAME: ${{ inputs.app-name }}
+        APP_NAME: ${{ inputs.app-name }}
       run: |
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
-        envsubst < deploy/rollout-template.yaml > deploy/${APPLICATION_NAME }-rollout.yaml
+        envsubst < deploy/rollout-template.yaml > deploy/${APP_NAME}-rollout.yaml
 
     - name: clone repository 
       shell: bash
@@ -140,12 +140,12 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
         OWNER: ${{ inputs.owner }}
-        REPOSITORY_NAME: ${ inputs.repository-name }
-        APPLICATION_NAME: ${ inputs.app-name }}
+        REPOSITORY_NAME: ${{ inputs.repository-name }}
+        APP_NAME: ${{ inputs.app-name }}
         PATH_NAME: ${{ inputs.path-name }}
       run: |
         git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${REPOSITORY_NAME}.git ${REPOSITORY_NAME}
-        cp deploy/${APPLICATION_NAME}-rollout.yaml ${REPOSITORY_NAME}/${PATH_NAME}/${APPLICATION_NAME}-rollout.yaml
+        cp deploy/${APP_NAME}-rollout.yaml ${REPOSITORY_NAME}/${PATH_NAME}/${APP_NAME}-rollout.yaml
     
     - name: config user admin of github
       shell: bash
@@ -217,7 +217,7 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app: ${{ inputs.app-name }}
+        argocd-app:  ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.argocd-app}}
         project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
