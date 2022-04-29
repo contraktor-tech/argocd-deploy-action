@@ -78,6 +78,7 @@ runs:
     
     - name: get app version
       id: app
+      shell: bash
       env:
         IMAGE: ${{ inputs.image-name }}
         GHCR: 'ghcr.io'
@@ -90,6 +91,7 @@ runs:
         echo "::set-output name=ghcr::$GHCR/$OWNER"
     
     - name: tag docker image to ecr
+      shell: bash
       env:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
@@ -98,6 +100,7 @@ runs:
         docker tag ${APP_NAME}:latest $ECR/$IMAGE:$VERSION
     
     - name: tag docker image to ghcr
+      shell: bash
       env:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
@@ -107,6 +110,7 @@ runs:
         docker tag $ECR/$IMAGE:$VERSION $GHCR/$IMAGE:latest
     
     - name: docker push to ecr
+      shell: bash
       env:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
@@ -115,6 +119,7 @@ runs:
         docker push $ECR/$IMAGE:$VERSION
     
     - name: docker login to ghcr
+      shell: bash
       env:
         USERNAME: ${{ inputs.username }}
         TOKEN: ${{ inputs.gh-token }}
@@ -122,6 +127,7 @@ runs:
         echo $TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
     
     - name: docker push to ghcr
+      shell: bash
       env:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         IMAGE: ${{ steps.app.outputs.image }}
@@ -181,9 +187,9 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
-        ${ENVIRONMENT} == 'prod' &&
-        (contains(github.event.head_commit.message, 'rollback') ||
-        contains(github.event.head_commit.message, 'revert'))
+        ( ${ENVIRONMENT} == 'prod' ) &&
+        ( contains(github.event.head_commit.message, 'rollback') ||
+        contains(github.event.head_commit.message, 'revert') )
       with:
         influxdb-token: ${{ inputs.influxdb-token }}
         influxdb-url: ${{ inputs.influxdb-url }}
@@ -195,9 +201,9 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
-        ${ENVIRONMENT} == 'prod' &&
-        (!contains(github.event.head_commit.message, 'rollback') &&
-        !contains(github.event.head_commit.message, 'revert'))
+        ( ${ENVIRONMENT} == 'prod' ) &&
+        ( !contains(github.event.head_commit.message, 'rollback') &&
+        !contains(github.event.head_commit.message, 'revert') )
       with:
         influxdb-token: ${{ inputs.influxdb-token }}
         influxdb-url: ${{ inputs.influxdb-url }}
