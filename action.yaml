@@ -198,7 +198,7 @@ runs:
         influxdb-token: ${{ inputs.influxdb-token }}
         influxdb-url: ${{ inputs.influxdb-url }}
         influxdb-measurement: 'deploy'
-        app: ${{ inputs.app-influx-name}}
+        app: ${{ inputs.platform-name}}-${{ inputs.app-name }}
     
     - name: deploy has succeeded - Send notification deploy to Slack
       uses: contraktor-tech/slack-notification-action@feat/CK-1953
