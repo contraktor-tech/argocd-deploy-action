@@ -8,9 +8,6 @@ inputs:
   aws-secret-access-key:
     description: ' AWS secret'
     require: true
-  image-name:
-    description: 'same name of repository'
-    require: true 
   owner:
     description: 'organization of github'
     require: true
@@ -26,8 +23,11 @@ inputs:
   repository-name:
     description: 'repository that will be cloned'
     require: true 
-  application-name:
+  app-name:
     description: 'application name'
+    require: true
+  platform-name:
+    description: 'application platform'
     require: true
   path-name:
     description: 'path of environment and platform'
@@ -41,23 +41,11 @@ inputs:
   influxdb-url:
     description: 'url to influxdb instance'
     require: true
-  app-influx-name:
-    description: 'name app to send deploy metric to influxdb ( combined name of platform name plus application name )'
-    require: true
   slack-hook: 
     description: 'token connect Slack' 
     require: true
   argocd-domain: 
     description: 'domain intern of Argo CD'
-    require: true
-  argocd-app: 
-    description: 'application name at Argo CD'
-    require: true
-  project-name:
-    description: 'combined name of application name plus platform name '
-    require: true
-  package-name:
-    description: 'package name of ghcr to delete'
     require: true
 
 runs:
@@ -80,7 +68,7 @@ runs:
       id: app
       shell: bash
       env:
-        IMAGE: ${{ inputs.image-name }}
+        IMAGE: ${{ inputs.app-name }}
         GHCR: 'ghcr.io'
         OWNER: ${{ inputs.owner }}
         ENVIRONMENT: ${{ inputs.environment }}
@@ -141,7 +129,7 @@ runs:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
-        APPLICATION_NAME: ${{ inputs.application-name }}
+        APPLICATION_NAME: ${{ inputs.app-name }}
       run: |
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
         envsubst < deploy/rollout-template.yaml > deploy/${APPLICATION_NAME }-rollout.yaml
@@ -153,7 +141,7 @@ runs:
         GH_TOKEN: ${{ inputs.gh-token }}
         OWNER: ${{ inputs.owner }}
         REPOSITORY_NAME: ${ inputs.repository-name }
-        APPLICATION_NAME: ${ inputs.application-name }}
+        APPLICATION_NAME: ${ inputs.app-name }}
         PATH_NAME: ${{ inputs.path-name }}
       run: |
         git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${REPOSITORY_NAME}.git ${REPOSITORY_NAME}
@@ -195,7 +183,7 @@ runs:
         influxdb-token: ${{ inputs.influxdb-token }}
         influxdb-url: ${{ inputs.influxdb-url }}
         influxdb-measurement: 'rollback'
-        app: ${{ inputs.app-influx-name}}
+        app: ${{ inputs.platform-name}}-${{ inputs.app-name }}
 
     - name: send deploy metric to influxdb
       uses: contraktor-tech/datapoint-producer-action@v2
@@ -218,8 +206,8 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app: ${{ inputs.argocd-app}}
-        project-name: ${{ inputs.project-name }}
+        argocd-app: ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.argocd-app}}
+        project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'success'
 
@@ -230,7 +218,7 @@ runs:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
         argocd-app: ${{ inputs.argocd-app}}
-        project-name: ${{ inputs.project-name }}
+        project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
 
@@ -239,4 +227,4 @@ runs:
       with:
         org: ${{ inputs.owner }}
         gh-token: ${{ inputs.gh-token }}
-        package-name: ${{ inputs.package-name }}
+        package-name: ${{ inputs.app-name }}
