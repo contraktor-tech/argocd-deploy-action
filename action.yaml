@@ -187,6 +187,7 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
+        ${{ success() }} &&
         (${ENVIRONMENT} == 'prod') &&
         (contains(github.event.head_commit.message, 'rollback') ||
         contains(github.event.head_commit.message, 'revert'))
@@ -201,6 +202,7 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
+        ${{ success() }} &&
         (${ENVIRONMENT} == 'prod') &&
         (!contains(github.event.head_commit.message, 'rollback') &&
         !contains(github.event.head_commit.message, 'revert'))
