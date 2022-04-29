@@ -161,8 +161,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.repository-name }}
       run: |
-        commit-message=`git show -s --format=%B`  
-        git commit -am"$commit-message"
+        commit_message=`git show -s --format=%B`  
+        git commit -am"$commit_message"
       
     - name: push commit to github
       shell: bash
@@ -206,7 +206,7 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app: ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.app-name}}
+        argocd-app: ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.app-name }}
         project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'success'
@@ -217,7 +217,7 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app:  ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.app-name}}
+        argocd-app:  ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.app-name }}
         project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
