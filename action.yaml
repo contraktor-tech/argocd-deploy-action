@@ -187,9 +187,9 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
-        ( ${ENVIRONMENT} == 'prod' ) &&
-        ( contains(github.event.head_commit.message, 'rollback') ||
-        contains(github.event.head_commit.message, 'revert') )
+        (${ENVIRONMENT} == 'prod') &&
+        (contains(github.event.head_commit.message, 'rollback') ||
+        contains(github.event.head_commit.message, 'revert'))
       with:
         influxdb-token: ${{ inputs.influxdb-token }}
         influxdb-url: ${{ inputs.influxdb-url }}
@@ -201,9 +201,9 @@ runs:
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
-        ( ${ENVIRONMENT} == 'prod' ) &&
-        ( !contains(github.event.head_commit.message, 'rollback') &&
-        !contains(github.event.head_commit.message, 'revert') )
+        (${ENVIRONMENT} == 'prod') &&
+        (!contains(github.event.head_commit.message, 'rollback') &&
+        !contains(github.event.head_commit.message, 'revert'))
       with:
         influxdb-token: ${{ inputs.influxdb-token }}
         influxdb-url: ${{ inputs.influxdb-url }}
