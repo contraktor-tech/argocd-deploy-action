@@ -85,7 +85,7 @@ runs:
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
       run: |
-        docker tag ${inputs.app-name}:latest $ECR/$IMAGE:$VERSION
+        docker tag ${{ inputs.app-name }}:latest $ECR/$IMAGE:$VERSION
     
     - name: tag docker image to ghcr
       shell: bash
@@ -217,7 +217,7 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app: ${{ inputs.argocd-app}}
+        argocd-app: ${{ inputs.app-name }}
         project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
