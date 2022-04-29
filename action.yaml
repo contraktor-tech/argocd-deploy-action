@@ -171,7 +171,7 @@ runs:
         git push
 
     - name: send rollback metric to influxdb
-      uses: contraktor-tech/datapoint-producer-action@v2
+      uses: contraktor-tech/datapoint-producer-action@master
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
@@ -186,7 +186,7 @@ runs:
         app: ${{ inputs.platform-name}}-${{ inputs.app-name }}
 
     - name: send deploy metric to influxdb
-      uses: contraktor-tech/datapoint-producer-action@v2
+      uses: contraktor-tech/datapoint-producer-action@master
       env:
         ENVIRONMENT: ${{ inputs.environment }}
       if: |
