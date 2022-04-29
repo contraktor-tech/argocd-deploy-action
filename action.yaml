@@ -95,7 +95,7 @@ runs:
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
       run: |
-        docker tag $ECR/$IMAGE:$VERSION
+        docker tag ${APP_NAME}:latest $ECR/$IMAGE:$VERSION
     
     - name: tag docker image to ghcr
       env:
