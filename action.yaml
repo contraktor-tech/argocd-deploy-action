@@ -136,7 +136,7 @@ runs:
 
     - name: clone repository 
       shell: bash
-      working-directory: ${{ inputs.repository-name }}
+      # working-directory: ${{ inputs.repository-name }}
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
         OWNER: ${{ inputs.owner }}
@@ -146,10 +146,6 @@ runs:
       run: |
         git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${REPOSITORY_NAME}.git ${REPOSITORY_NAME}
         cp deploy/${APP_NAME}-rollout.yaml ${REPOSITORY_NAME}/${PATH_NAME}/${APP_NAME}-rollout.yaml
-        
-        git remote -v 
-        git branch
-        git status
     
     - name: config user admin of github
       shell: bash
@@ -210,7 +206,7 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app: ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.argocd-app}}
+        argocd-app: ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.app-name}}
         project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'success'
@@ -221,7 +217,7 @@ runs:
       with:
         slack-hook: ${{ inputs.slack-hook }}
         argocd-domain: ${{ inputs.argocd-domain}}
-        argocd-app:  ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.argocd-app}}
+        argocd-app:  ${{ inputs.environment}}-${{ inputs.platform-name }}-${{ inputs.app-name}}
         project-name: ${{ inputs.app-name }}
         environment-name: ${{ inputs.environment }}
         deploy-status: 'failure'
