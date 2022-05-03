@@ -123,20 +123,21 @@ runs:
       run: |
         docker push $GHCR/$IMAGE:latest
 
-    - name: set docker image to rollout
+    - name: set docker image, environment and namespace to rollout
       shell: bash
       env:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
         APP_NAME: ${{ inputs.app-name }}
+        ENVIRONMENT: ${{ inputs.environment }}
+        NAMESPACE: ${{ inputs.environment }}-${{ inputs.platform-name }}
       run: |
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
         envsubst < deploy/rollout-template.yaml > deploy/${APP_NAME}-rollout.yaml
 
     - name: clone repository 
       shell: bash
-      # working-directory: ${{ inputs.repository-name }}
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
         OWNER: ${{ inputs.owner }}
