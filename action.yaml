@@ -198,7 +198,7 @@ runs:
         app: ${{ inputs.platform-name}}-${{ inputs.app-name }}
     
     - name: deploy has succeeded - Send notification deploy to Slack
-      uses: contraktor-tech/slack-notification-action@feat/CK-1953
+      uses: contraktor-tech/slack-notification-action@v1
       if: ${{ success() }}
       with:
         slack-hook: ${{ inputs.slack-hook }}
@@ -209,7 +209,7 @@ runs:
         deploy-status: 'success'
 
     - name: deploy has failed - Send notification deploy to Slack
-      uses: contraktor-tech/slack-notification-action@feat/CK-1953
+      uses: contraktor-tech/slack-notification-action@v1
       if: ${{ failure() }}
       with:
         slack-hook: ${{ inputs.slack-hook }}
