@@ -129,12 +129,11 @@ runs:
         ECR: ${{ steps.login-ecr.outputs.registry }}
         VERSION: ${{ steps.app.outputs.version }}
         IMAGE: ${{ steps.app.outputs.image }}
-        APP_NAME: ${{ inputs.app-name }}
         ENVIRONMENT: ${{ inputs.environment }}
         NAMESPACE: ${{ inputs.environment }}-${{ inputs.platform-name }}
       run: |
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
-        envsubst < deploy/rollout-template.yaml > deploy/${APP_NAME}-rollout.yaml
+        envsubst < deploy/rollout-template.yaml > deploy/rollout.yaml
 
     - name: clone repository 
       shell: bash
@@ -142,11 +141,10 @@ runs:
         GH_TOKEN: ${{ inputs.gh-token }}
         OWNER: ${{ inputs.owner }}
         REPOSITORY_NAME: ${{ inputs.repository-name }}
-        APP_NAME: ${{ inputs.app-name }}
         PATH_NAME: ${{ inputs.path-name }}
       run: |
         git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${REPOSITORY_NAME}.git ${REPOSITORY_NAME}
-        cp deploy/${APP_NAME}-rollout.yaml ${REPOSITORY_NAME}/${PATH_NAME}/${APP_NAME}-rollout.yaml
+        cp deploy/rollout.yaml ${REPOSITORY_NAME}/${PATH_NAME}/rollout.yaml
     
     - name: config user admin of github
       shell: bash
