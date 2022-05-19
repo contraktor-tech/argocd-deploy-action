@@ -5,21 +5,21 @@ Action de deploy das aplicações com o  ArgoCD.
 ## Inputs
 Todos os inputs são de definição obrigatória.
 
-- aws-access-key-id → secret key da AWS 
-- aws-secret-access-key → secret da AWS
-- owner → organização
-- environment → ambiente da aplicação( dev, stg ou prod ). 
-- username → usuário que comitará as alterações quando a pipeline executar.
-- gh-token → token do GitHub
-- repository-name → repositório que será clonado durante a execução da pipeline.
-- app-name → aplicação
-- platform-name → plataforma
-- path-name → caminho da pasta da aplicação no repositório clonado.
-- email → email do usuário que comitará as alterações.
-- influxdb-token → token de acesso a instancia do InfluxDB
-- influxdb-url → url da instancia do InfluxDB
-- slack-hook → token de acesso ao Slack
-- argocd-domain → dominío interno do ArgoCD
+- **aws-access-key-id** → secret key da AWS 
+- **aws-secret-access-key** → secret da AWS
+- **owner** → organização
+- **environment** → ambiente da aplicação( dev, stg ou prod ). 
+- **username** → usuário que comitará as alterações quando a pipeline executar.
+- **gh-token** → token do GitHub
+- **repository-name** → repositório que será clonado durante a execução da pipeline.
+- **app-name** → aplicação
+- **platform-name** → plataforma
+- **path-name** → caminho da pasta da aplicação no repositório clonado.
+- **email** → email do usuário que comitará as alterações.
+- **influxdb-token** → token de acesso a instancia do InfluxDB
+- **influxdb-url** → url da instancia do InfluxDB
+- **slack-hook** → token de acesso ao Slack
+- **argocd-domain** → dominío interno do ArgoCD
 
 ## Etapas da Action
 - Checkout do GitHub
