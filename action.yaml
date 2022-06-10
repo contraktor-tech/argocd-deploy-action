@@ -134,6 +134,14 @@ runs:
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
         envsubst < deploy/rollout-template-${ENVIRONMENT}.yaml > deploy/rollout-${ENVIRONMENT}.yaml
 
+    - name: get commit message in application repository
+      id: commit-app
+      shell: bash
+      # working-directory: ${{ inputs.repository-name }}
+      run: |
+        commit_message=`git show -s --format=%B`  
+        echo "::set-output name=commit_message::$COMMIT_MESSAGE"
+
     - name: clone repository 
       shell: bash
       env:
@@ -159,9 +167,10 @@ runs:
     - name: commit alterations at the github
       shell: bash
       working-directory: ${{ inputs.repository-name }}
-      run: |
-        commit_message=`git show -s --format=%B`  
-        git commit -am"$commit_message"
+      env:
+        COMMIT_MESSAGE: ${{ steps.commit-app.outputs.commit_message }}
+      run: |  
+        git commit -am"${COMMIT_MESSAGE}"
       
     - name: push commit to github
       shell: bash
