@@ -170,7 +170,7 @@ runs:
       env:
         COMMIT_MESSAGE: ${{ steps.commit-app.outputs.commit_message }}
       run: |  
-        git commit -am"$COMMIT_MESSAGE"
+        git commit -am"${COMMIT_MESSAGE}"
       
     - name: push commit to github
       shell: bash
