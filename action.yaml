@@ -64,7 +64,7 @@ runs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: get app version
+    - name: get app data
       id: app
       shell: bash
       env:
@@ -135,14 +135,6 @@ runs:
       run: |
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
         envsubst < deploy/rollout-template-${ENVIRONMENT}.yaml > deploy/rollout-${ENVIRONMENT}.yaml
-
-    #- name: get commit message in application repository
-      #id: commit-app
-      #shell: bash
-      ## working-directory: ${{ inputs.repository-name }}
-      #run: |
-        #commit_message=`git show -s --format=%B`
-        #echo "::set-output name=commit_message::$COMMIT_MESSAGE"
 
     - name: clone repository
       shell: bash
