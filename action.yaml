@@ -22,7 +22,7 @@ inputs:
     require: true
   repository-name:
     description: 'repository that will be cloned'
-    require: true 
+    require: true
   app-name:
     description: 'application name'
     require: true
@@ -41,10 +41,10 @@ inputs:
   influxdb-url:
     description: 'url to influxdb instance'
     require: true
-  slack-hook: 
-    description: 'token connect Slack' 
+  slack-hook:
+    description: 'token connect Slack'
     require: true
-  argocd-domain: 
+  argocd-domain:
     description: 'domain intern of Argo CD'
     require: true
 
@@ -63,8 +63,8 @@ runs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-    
-    - name: get app version
+
+    - name: get app data
       id: app
       shell: bash
       env:
@@ -74,10 +74,12 @@ runs:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
         version=`git rev-parse --short HEAD`
+        commit_message=`git show -s --format=%B`
         echo "::set-output name=version::${ENVIRONMENT}-$version"
         echo "::set-output name=image::$IMAGE"
         echo "::set-output name=ghcr::$GHCR/$OWNER"
-    
+        echo "::set-output name=commit_message::${commit_message}"
+
     - name: tag docker image to ecr
       shell: bash
       env:
@@ -86,7 +88,7 @@ runs:
         IMAGE: ${{ steps.app.outputs.image }}
       run: |
         docker tag $IMAGE:latest $ECR/$IMAGE:$VERSION
-    
+
     - name: tag docker image to ghcr
       shell: bash
       env:
@@ -96,7 +98,7 @@ runs:
         GHCR: ${{ steps.app.outputs.ghcr }}
       run: |
         docker tag $ECR/$IMAGE:$VERSION $GHCR/$IMAGE:latest
-    
+
     - name: docker push to ecr
       shell: bash
       env:
@@ -105,7 +107,7 @@ runs:
         IMAGE: ${{ steps.app.outputs.image }}
       run: |
         docker push $ECR/$IMAGE:$VERSION
-    
+
     - name: docker login to ghcr
       shell: bash
       env:
@@ -113,7 +115,7 @@ runs:
         TOKEN: ${{ inputs.gh-token }}
       run: |
         echo $TOKEN | docker login ghcr.io -u $USERNAME --password-stdin
-    
+
     - name: docker push to ghcr
       shell: bash
       env:
@@ -134,7 +136,7 @@ runs:
         export DOCKER_IMAGE=$ECR/$IMAGE:$VERSION
         envsubst < deploy/rollout-template-${ENVIRONMENT}.yaml > deploy/rollout-${ENVIRONMENT}.yaml
 
-    - name: clone repository 
+    - name: clone repository
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
@@ -145,7 +147,7 @@ runs:
       run: |
         git clone -b master https://oauth2:${GH_TOKEN}@github.com/${OWNER}/${REPOSITORY_NAME}.git ${REPOSITORY_NAME}
         cp deploy/rollout-${ENVIRONMENT}.yaml ${REPOSITORY_NAME}/${PATH_NAME}/rollout.yaml
-    
+
     - name: config user admin of github
       shell: bash
       working-directory: ${{ inputs.repository-name }}
@@ -155,18 +157,19 @@ runs:
       run: |
         git config user.name ${USERNAME}
         git config user.email ${EMAIL}
-      
+
     - name: commit alterations at the github
       shell: bash
       working-directory: ${{ inputs.repository-name }}
+      env:
+        MESSAGE: ${{ steps.app.outputs.commit_message }}
       run: |
-        commit_message=`git show -s --format=%B`  
-        git commit -am"$commit_message"
-      
+        git commit -am"${MESSAGE}"
+
     - name: push commit to github
       shell: bash
       working-directory: ${{ inputs.repository-name }}
-      run: |     
+      run: |
         git push
 
     - name: send rollback metric to influxdb
@@ -194,7 +197,7 @@ runs:
         influxdb-url: ${{ inputs.influxdb-url }}
         influxdb-measurement: 'deploy'
         app: ${{ inputs.platform-name}}-${{ inputs.app-name }}
-    
+
     - name: deploy has succeeded - Send notification deploy to Slack
       uses: contraktor-tech/slack-notification-action@v1
       if: ${{ success() }}
