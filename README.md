@@ -5,10 +5,10 @@ Action de deploy das aplicações com o  ArgoCD.
 ## Inputs
 Todos os inputs são de definição obrigatória.
 
-- **aws-access-key-id** → secret key da AWS 
+- **aws-access-key-id** → secret key da AWS
 - **aws-secret-access-key** → secret da AWS
-- **owner** → organização
-- **environment** → ambiente da aplicação( dev, stg ou prod ). 
+- **owner** → organização no github
+- **environment** → ambiente da aplicação( dev, stg ou prod ).
 - **username** → usuário que comitará as alterações quando a pipeline executar.
 - **gh-token** → token do GitHub
 - **repository-name** → repositório que será clonado durante a execução da pipeline.
@@ -50,7 +50,7 @@ name: deploy-ambiente-argocd
 on:
   push:
     branches:
-      - 
+      -
 
 env:
   APP_NAME: '<nome-da-aplicação>'
@@ -68,19 +68,19 @@ jobs:
       - name: Deploy to Argo CD
         uses: contraktor-tech/argocd-deploy-action@v3
         with:
-          aws-access-key-id: 
-          aws-secret-access-key: 
-          owner: 
-          environment: 
-          username: 
-          gh-token: 
-          repository-name: 
+          aws-access-key-id:
+          aws-secret-access-key:
+          owner:
+          environment:
+          username:
+          gh-token:
+          repository-name:
           app-name: ${{ env.APP_NAME }}
-          platform-name: 
+          platform-name:
           path-name: '<ambiente>/<plataforma>/${{ env.APP_NAME }}'
-          email: 
-          influxdb-token: 
-          influxdb-url: 
-          slack-hook: 
-          argocd-domain: 
+          email:
+          influxdb-token:
+          influxdb-url:
+          slack-hook:
+          argocd-domain:
 ```
