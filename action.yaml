@@ -74,11 +74,15 @@ runs:
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
         version=`git rev-parse --short HEAD`
-        commit_message=`git show -s --format=%B`
+        commit_message=`git log -1 --format=%s`
+        commit_author_name=`git log -1 --format=%an`
+        commit_author_email=`git log -1 --format=%ae`
         echo "::set-output name=version::${ENVIRONMENT}-$version"
         echo "::set-output name=image::$IMAGE"
         echo "::set-output name=ghcr::$GHCR/$OWNER"
         echo "::set-output name=commit_message::${commit_message}"
+        echo "::set-output name=commit_author_name::${commit_author_name}"
+        echo "::set-output name=commit_author_email::${commit_author_email}"
 
     - name: tag docker image to ecr
       shell: bash
@@ -152,8 +156,8 @@ runs:
       shell: bash
       working-directory: ${{ inputs.repository-name }}
       env:
-        USERNAME: ${{ inputs.username }}
-        EMAIL: ${{ inputs.email }}
+        USERNAME: ${{ steps.app.outputs.commit_author_name }}
+        EMAIL: ${{ steps.app.outputs.commit_author_email }}
       run: |
         git config user.name ${USERNAME}
         git config user.email ${EMAIL}
