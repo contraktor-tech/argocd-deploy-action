@@ -159,8 +159,8 @@ runs:
         USERNAME: ${{ steps.app.outputs.commit_author_name }}
         EMAIL: ${{ steps.app.outputs.commit_author_email }}
       run: |
-        git config user.name ${USERNAME}
-        git config user.email ${EMAIL}
+        git config user.name "${USERNAME}"
+        git config user.email "${EMAIL}"
 
     - name: commit alterations at the github
       shell: bash
